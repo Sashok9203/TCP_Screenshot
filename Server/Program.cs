@@ -51,7 +51,7 @@ namespace Server
             Console.WriteLine($"Client {client.Client.RemoteEndPoint} disconnected");
         }
 
-        private static  Task  SendScreenShot(StreamWriter writer,EndPoint endPoint)
+        private static  Task  SendScreenShot(StreamWriter writer,EndPoint? endPoint)
         {
             return Task.Run(async () =>
             {

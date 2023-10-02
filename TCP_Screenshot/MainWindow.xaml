@@ -7,7 +7,7 @@
          xmlns:vms="clr-namespace:TCP_Screenshot.Models"
         d:DataContext="{d:DesignInstance Type=vms:ClientModel}"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" MaxHeight="450" MaxWidth="800" >
+        Title="TCP screenshot client" Height="450" Width="800">
     
     <Window.DataContext>
         <vms:ClientModel/>
@@ -24,39 +24,41 @@
         </Grid.ColumnDefinitions>
        
         <Border  Margin="10" BorderBrush="Gray" BorderThickness="2" CornerRadius="4">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ListView ItemsSource="{Binding Screenshots}">
-                    <ListView.ItemTemplate>
-                       <DataTemplate>
-                            <ContentPresenter Content="{Binding}">
-                                <ContentPresenter.InputBindings>
-                                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType = {x:Type Window}},Path= DataContext.Show}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType = {x:Type ListView}},Path= SelectedItem }"/>
-                                </ContentPresenter.InputBindings>
-                                <ContentPresenter.ContentTemplate>
-                                    <DataTemplate>
-                                    <Border Margin="15,1,0,1" Width="410" BorderBrush="Gray" BorderThickness="2" CornerRadius="8" Background="#FF6F9BCC">
+            <ListView x:Name="listView" ItemsSource="{Binding Screenshots}" HorizontalContentAlignment="Stretch">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ContentPresenter Content="{Binding}">
+                            <ContentPresenter.InputBindings>
+                                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType = {x:Type Window}},Path= DataContext.Show}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType = {x:Type ListView}},Path= SelectedItem }"/>
+                            </ContentPresenter.InputBindings>
+                            <ContentPresenter.ContentTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,1,0,1"  BorderBrush="Gray" BorderThickness="2" CornerRadius="8" Background="#FF6F9BCC">
                                         <DockPanel>
                                             <Image DockPanel.Dock="Left" Source="{Binding Screenshot ,Converter={StaticResource bitmapConverter}}" Stretch="Uniform" Margin="10" Height="50" HorizontalAlignment="Left"/>
-                                            <TextBlock Text="{Binding Time}" Margin="15" FontSize="15" FontWeight="Medium" Foreground="White"/>
+                                            <TextBlock Text="{Binding Time}" Margin="15,10,0,0" FontSize="15" FontWeight="Medium" Foreground="White"/>
                                         </DockPanel>
                                     </Border>
-                                    </DataTemplate>
-                                </ContentPresenter.ContentTemplate>
-                            </ContentPresenter>
-                       </DataTemplate>
-                    </ListView.ItemTemplate>
-                    <ListView.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Show" Command="{Binding Show}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
-                            <MenuItem Header="Save Selected"  Command="{Binding Save }" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
-                            <MenuItem Header="Delete Selected" Command="{Binding Delete}" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
-                        </ContextMenu>
-                    </ListView.ContextMenu>
-                 </ListView>
-            </ScrollViewer>
+                                </DataTemplate>
+                            </ContentPresenter.ContentTemplate>
+                        </ContentPresenter>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Show" Command="{Binding Show}" CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                        <MenuItem Header="Save Selected"  Command="{Binding Save }" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                        <MenuItem Header="Delete Selected" Command="{Binding Delete}" CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"/>
+                    </ContextMenu>
+                </ListView.ContextMenu>
+            </ListView>
         </Border>
-        <Border Grid.Column="1" Margin="10" BorderBrush="Gray" BorderThickness="2" CornerRadius="4">
+        <Border Grid.Column="1" Margin="10" BorderBrush="Gray" BorderThickness="2" Height="250" CornerRadius="4" VerticalAlignment="Top">
             <StackPanel Margin="20" >
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Screenshots count:" FontSize="14" Margin="0,0,10,10"/>
+                    <TextBlock Text="{Binding ElementName=listView,Path=ItemsSource.Count}" FontSize="14" Margin="0,0,10,10"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                     <TextBlock Text="Period (sec):" VerticalAlignment="Center" FontSize="14" Margin="0,0,10,0"/>
                     <TextBox Text="{Binding Period}" VerticalAlignment="Center" FontSize="14" Width="52" Margin="0,0,10,0" Height="25"/>
