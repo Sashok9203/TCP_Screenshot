@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Windows.Interop;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Drawing;
 using Shared_Data;
@@ -13,16 +12,11 @@ using System;
 using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Text;
-using static System.Resources.ResXFileRef;
 using System.Linq;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace TCP_Screenshot.Models
 {
@@ -69,10 +63,8 @@ namespace TCP_Screenshot.Models
                 {
                     if (item is ScreenshotData scr)
                     {
-                        Bitmap? bmp = default;
-                        await Application.Current.Dispatcher.BeginInvoke(new Action(() =>{bmp = BitmapFromSource(scr.Screenshot);}));
                         string savePath = Path.Combine(path, $"screenshot_{scr.Time:d.M.yyyy_(HH-mm-ss-ff)}.png");
-                        await File.WriteAllBytesAsync(savePath, (byte[])converter.ConvertTo(bmp, typeof(byte[])), ct);
+                        await File.WriteAllBytesAsync(savePath, (byte[])converter.ConvertTo(scr.Screenshot, typeof(byte[])), ct);
                     }
                    
                 });
@@ -84,8 +76,7 @@ namespace TCP_Screenshot.Models
             if (o is ScreenshotData data)
             {
                 string tempPath = Path.Combine(Path.GetTempPath(), "view_temp.png");
-                Bitmap bmp = BitmapFromSource(data.Screenshot);
-                bmp.Save(tempPath, ImageFormat.Png);
+                data?.Screenshot?.Save(tempPath, ImageFormat.Png);
                 new Process
                 {
                     StartInfo = new ProcessStartInfo(tempPath)
@@ -106,26 +97,6 @@ namespace TCP_Screenshot.Models
             }
         }
 
-        private  BitmapSource ConvertBitmap(Bitmap source)
-        {
-            return Imaging.CreateBitmapSourceFromHBitmap(
-                          source.GetHbitmap(),
-                          IntPtr.Zero,
-                          Int32Rect.Empty,
-                          BitmapSizeOptions.FromEmptyOptions());
-        }
-
-        private  Bitmap BitmapFromSource(BitmapSource source)
-        {
-            Bitmap bmp = new (source.PixelWidth,source.PixelHeight,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-            BitmapData data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size),
-                                                ImageLockMode.WriteOnly,
-                                                System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-            source.CopyPixels(Int32Rect.Empty,data.Scan0,data.Height * data.Stride,data.Stride);
-            bmp.UnlockBits(data);
-            return bmp;
-        }
-
         private async Task getScreenShotFromServerAsync(StreamReader reader)
         {
             string json = await reader.ReadLineAsync();
@@ -134,15 +105,14 @@ namespace TCP_Screenshot.Models
 
             using MemoryStream ms = new(bytes);
 
-            Bitmap bmp = new(ms);
-
             await Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
                 Screenshots.Add(new()
                 {
-                    Screenshot = ConvertBitmap(bmp)
+                    Screenshot = new Bitmap(ms)
                 });
             }));
+            bytes = null;
         }
 
         private async Task getScreenShotAsync(Command command)
@@ -179,7 +149,7 @@ namespace TCP_Screenshot.Models
         public RelayCommand Exit => new((o) => Environment.Exit(0));
         public RelayCommand Auto => new((o) =>  autoManual());
         public RelayCommand SaveAll => new(async (o) =>await saveImagesAsync(Screenshots),(o)=>manualScreenshot);
-        public RelayCommand DeleteAll => new((o) => Screenshots.Clear());
+        public RelayCommand DeleteAll => new((o) => { Screenshots.Clear(); });
 
         public ObservableCollection<ScreenshotData> Screenshots { get; set; } = new();
 

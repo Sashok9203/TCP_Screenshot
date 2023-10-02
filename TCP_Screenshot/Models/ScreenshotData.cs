@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Media.Imaging;
 
 namespace TCP_Screenshot.Models
@@ -8,7 +9,7 @@ namespace TCP_Screenshot.Models
     {
         public DateTime Time { get; set; } = DateTime.Now;
         
-        public BitmapSource? Screenshot { get; set; }
+        public Bitmap? Screenshot { get; set; }
 
     }
 }

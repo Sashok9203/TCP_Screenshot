@@ -36,13 +36,13 @@ namespace Server
             switch (command?.Command)
             {
                 case Command.Screenshot:
-                    await SendScreenShotAsync(writer,client.Client.RemoteEndPoint);
+                    await SendScreenShot(writer,client.Client.RemoteEndPoint);
                     break;
                 case Command.AutoScreenshotStart:
 
                     while (client.Connected)
                     {
-                       await  SendScreenShotAsync(writer, client.Client.RemoteEndPoint);
+                       await SendScreenShot(writer, client.Client.RemoteEndPoint);
                        await Task.Delay(command.Period * 1000);
                     }
                     break;
@@ -51,18 +51,23 @@ namespace Server
             Console.WriteLine($"Client {client.Client.RemoteEndPoint} disconnected");
         }
 
-        private async static Task  SendScreenShotAsync(StreamWriter writer,EndPoint endPoint)
+        private static  Task  SendScreenShot(StreamWriter writer,EndPoint endPoint)
         {
-            ImageConverter converter = new();
-            byte[]? buffer = (byte[]?) converter.ConvertTo(BitmapLibrary.TakeScreenshot(), typeof(byte[]));
-            try
+            return Task.Run(async () =>
             {
-                string json = JsonSerializer.Serialize(buffer);
-                await writer.WriteLineAsync(json);
-                await writer.FlushAsync();
-                Console.WriteLine($"Screenshoot sended to client {endPoint}");
-            }
-            catch (Exception ex) { Console.WriteLine(ex.Message); }
+                ImageConverter converter = new();
+                byte[]? buffer = (byte[]?)converter.ConvertTo(BitmapLibrary.TakeScreenshot(), typeof(byte[]));
+                try
+                {
+                    string json = JsonSerializer.Serialize(buffer);
+                  
+                    await writer.WriteLineAsync(json);
+                    
+                    Console.WriteLine($"Screenshoot sended to client {endPoint}");
+                    buffer = null;
+                }
+                catch (Exception ex) { Console.WriteLine(ex.Message); }
+            });
         }
     }
 }

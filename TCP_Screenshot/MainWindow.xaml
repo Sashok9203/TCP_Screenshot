@@ -8,9 +8,14 @@
         d:DataContext="{d:DesignInstance Type=vms:ClientModel}"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" MaxHeight="450" MaxWidth="800" >
+    
     <Window.DataContext>
         <vms:ClientModel/>
     </Window.DataContext>
+    
+    <Window.Resources>
+        <vms:BitmapToBitmapSourceConverter x:Key="bitmapConverter"/>
+    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -31,7 +36,7 @@
                                     <DataTemplate>
                                     <Border Margin="15,1,0,1" Width="410" BorderBrush="Gray" BorderThickness="2" CornerRadius="8" Background="#FF6F9BCC">
                                         <DockPanel>
-                                            <Image DockPanel.Dock="Left" Source="{Binding Screenshot }" Stretch="Uniform" Margin="10" Height="50" HorizontalAlignment="Left"/>
+                                            <Image DockPanel.Dock="Left" Source="{Binding Screenshot ,Converter={StaticResource bitmapConverter}}" Stretch="Uniform" Margin="10" Height="50" HorizontalAlignment="Left"/>
                                             <TextBlock Text="{Binding Time}" Margin="15" FontSize="15" FontWeight="Medium" Foreground="White"/>
                                         </DockPanel>
                                     </Border>
