@@ -22,6 +22,7 @@ using System.Linq;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace TCP_Screenshot.Models
 {
@@ -51,25 +52,30 @@ namespace TCP_Screenshot.Models
                 await getScreenShotAsync(Command.AutoScreenshotStart);
         }
 
-        private void saveSelectedImages(object o)
+        private async Task saveSelectedImages(object o)
         {
             if (o is IEnumerable<object>  data)
-                 saveImages(data);
+                await saveImagesAsync(data);
         }
 
-        private void saveImages(IEnumerable<object> images)
+        private async Task saveImagesAsync(IEnumerable<object> images)
         {
             System.Windows.Forms.FolderBrowserDialog fbd = new();
             if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 ImageConverter converter = new();
                 string path = fbd.SelectedPath;
-                foreach (ScreenshotData item in images)
+                await Parallel.ForEachAsync(images, async (item, ct) =>
                 {
-                    string savePath = Path.Combine(path, $"screenshot_{item.Time:d.M.yyyy_(HH-mm-ss-ff)}.png");
-                    Bitmap bmp = BitmapFromSource(item.Screenshot);
-                    File.WriteAllBytes(savePath, (byte[])converter.ConvertTo(bmp, typeof(byte[])));
-                }
+                    if (item is ScreenshotData scr)
+                    {
+                        Bitmap? bmp = default;
+                        await Application.Current.Dispatcher.BeginInvoke(new Action(() =>{bmp = BitmapFromSource(scr.Screenshot);}));
+                        string savePath = Path.Combine(path, $"screenshot_{scr.Time:d.M.yyyy_(HH-mm-ss-ff)}.png");
+                        await File.WriteAllBytesAsync(savePath, (byte[])converter.ConvertTo(bmp, typeof(byte[])), ct);
+                    }
+                   
+                });
             }
         }
 
@@ -166,13 +172,13 @@ namespace TCP_Screenshot.Models
         
         public int Period { get; set; }
         public string AutoManualButtonName => manualScreenshot ? "Auto" : "Manual";
-        public RelayCommand Get => new((o) => getScreenShotAsync(Command.Screenshot),(o)=>manualScreenshot);
+        public RelayCommand Get => new(async (o) => await getScreenShotAsync(Command.Screenshot),(o)=>manualScreenshot);
         public RelayCommand Show => new((o) => showImage(o));
         public RelayCommand Delete => new((o) => deleteImage(o));
-        public RelayCommand Save => new((o) => saveSelectedImages(o));
+        public RelayCommand Save => new(async (o) => await saveSelectedImages(o));
         public RelayCommand Exit => new((o) => Environment.Exit(0));
-        public RelayCommand Auto => new( (o) =>  autoManual());
-        public RelayCommand SaveAll => new((o) => saveImages(Screenshots),(o)=>manualScreenshot);
+        public RelayCommand Auto => new((o) =>  autoManual());
+        public RelayCommand SaveAll => new(async (o) =>await saveImagesAsync(Screenshots),(o)=>manualScreenshot);
         public RelayCommand DeleteAll => new((o) => Screenshots.Clear());
 
         public ObservableCollection<ScreenshotData> Screenshots { get; set; } = new();

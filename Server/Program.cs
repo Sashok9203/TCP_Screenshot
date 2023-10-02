@@ -13,7 +13,7 @@ namespace Server
 
         static private readonly int port = 8080;
 
-        static  Task Main(string[] args)
+        static void Main(string[] args)
         {
             IPEndPoint localEndPoint = new(IPAddress.Parse(ip), port);
             TcpListener server = new(localEndPoint);
@@ -26,7 +26,7 @@ namespace Server
             }
         }
 
-        private static void clientProcess(TcpClient client)
+        private static async void clientProcess(TcpClient client)
         {
             Console.WriteLine($"Client  {client.Client.RemoteEndPoint} connected");
             using StreamReader reader = new(client.GetStream());
@@ -36,14 +36,14 @@ namespace Server
             switch (command?.Command)
             {
                 case Command.Screenshot:
-                     SendScreenShotAsync(writer,client.Client.RemoteEndPoint);
+                    await SendScreenShotAsync(writer,client.Client.RemoteEndPoint);
                     break;
                 case Command.AutoScreenshotStart:
 
                     while (client.Connected)
                     {
-                         SendScreenShotAsync(writer, client.Client.RemoteEndPoint);
-                         Thread.Sleep(command.Period * 1000);
+                       await  SendScreenShotAsync(writer, client.Client.RemoteEndPoint);
+                       await Task.Delay(command.Period * 1000);
                     }
                     break;
                 default: throw new InvalidEnumArgumentException();
@@ -51,15 +51,15 @@ namespace Server
             Console.WriteLine($"Client {client.Client.RemoteEndPoint} disconnected");
         }
 
-        private static  void SendScreenShotAsync(StreamWriter writer,EndPoint endPoint)
+        private async static Task  SendScreenShotAsync(StreamWriter writer,EndPoint endPoint)
         {
             ImageConverter converter = new();
             byte[]? buffer = (byte[]?) converter.ConvertTo(BitmapLibrary.TakeScreenshot(), typeof(byte[]));
             try
             {
                 string json = JsonSerializer.Serialize(buffer);
-                writer.WriteLine(json);
-                writer.Flush();
+                await writer.WriteLineAsync(json);
+                await writer.FlushAsync();
                 Console.WriteLine($"Screenshoot sended to client {endPoint}");
             }
             catch (Exception ex) { Console.WriteLine(ex.Message); }
